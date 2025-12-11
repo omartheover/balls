@@ -1,15 +1,18 @@
 #include <raylib.h>
 #include <iostream>
 
-
 int gambled_money = 0;
 int output = 0;
 int inventory = 250000;
+bool rolling = false;
+auto rolling_frames = 0;
+auto rolling_value = 0;
+
 
 int main(){
 
 
-    InitWindow(900, 900, "mine");
+    InitWindow(900, 900, "Lucky Gamble");
     InitAudioDevice();
     SetTargetFPS(60);
     Image imag = LoadImage("C:\\Users\\PCM\\Pictures\\bg\\backe.jpg");
@@ -18,6 +21,8 @@ int main(){
     Sound money = LoadSound("C:\\Users\\PCM\\Pictures\\bg\\mysound.wav");
     Texture2D crusor = LoadTexture("C:\\Users\\PCM\\Pictures\\Camera Roll\\crusor.png");
     Texture2D button = LoadTexture("C:\\Users\\PCM\\Pictures\\Camera Roll\\gamble.png");
+    Sound roll = LoadSound("C:\\Users\\PCM\\Pictures\\Camera Roll\\slot.mp3");
+    Sound fail = LoadSound("C:\\Users\\PCM\\Pictures\\Camera Roll\\fail.mp3");
     Texture2D button2 = LoadTexture("C:\\Users\\PCM\\Pictures\\Camera Roll\\gamble2.png");
     Vector2 crusorpos = {100.0f, 100.0f};
     int weight = 50;
@@ -41,6 +46,26 @@ int main(){
         destRec = { crusorpos.x, crusorpos.y, weight*1.0f, hight*1.0f };
         Rectangle crusorv = {crusorpos.x, crusorpos.y, 50.0f, 50.0f};
 
+        if(rolling){
+                rolling_value = (rand() % 250000) + 1;
+                rolling_frames--;
+
+                if(rolling_frames <= 0){
+                rolling = false;
+                gambled_money = rolling_value;
+                if(gambled_money > inventory){
+                    continue;
+                }
+                inventory = inventory - gambled_money;
+                output = (rand() % 300000);
+                if(output >= gambled_money){
+                    PlaySound(money);
+                }
+                else{PlaySound(fail);}
+                inventory = inventory + output;
+                }
+            }
+
         BeginDrawing();
         ClearBackground(WHITE);
         DrawTexture(back, 0, 0, WHITE);
@@ -48,20 +73,18 @@ int main(){
         if(CheckCollisionRecs(crusorv, btnbounds)){
             DrawTexture(button2, 310,450,WHITE);
             if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
-                PlaySound(money);
-                 gambled_money = (rand() % 250000) + 1;
-                 if(gambled_money > inventory){
-                    continue;
-                 }
-                 inventory = inventory - gambled_money;
-                 output = (rand() % 300000);
-                 inventory = inventory + output;
+
+                rolling_frames = 215;
+                rolling = true;
+                PlaySound(roll);
                 
             }
         }
 
-        
-        DrawText(TextFormat("You have gambled: %d$", gambled_money), 300, 170, 32, YELLOW);
+        if(rolling){
+            DrawText(TextFormat("You have gambled: %d$", rolling_value), 300, 170, 32, YELLOW);
+        }else{
+        DrawText(TextFormat("You have gambled: %d$", gambled_money), 300, 170, 32, YELLOW);}
         if(output > gambled_money){
             DrawText(TextFormat("You earned: %d$", output), 330, 220, 32, GREEN);
         }
@@ -79,4 +102,6 @@ int main(){
     UnloadTexture(button);
     CloseAudioDevice();
     CloseWindow();
+
+    return 0;
 }
